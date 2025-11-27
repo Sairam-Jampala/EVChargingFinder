@@ -1,4 +1,4 @@
-package com.example.myapp
+package com.example.evchargingfinder
 
 import org.junit.Test
 
