@@ -1,4 +1,4 @@
-package com.example.evchargefinder.ui
+package com.example.evchargingfinder.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

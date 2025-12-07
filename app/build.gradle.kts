@@ -9,7 +9,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.myapp"
+        applicationId = "com.example.evchargingfinder"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
