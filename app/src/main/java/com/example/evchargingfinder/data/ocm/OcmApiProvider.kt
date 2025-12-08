@@ -39,4 +39,7 @@ object OcmApiProvider {
         .build()
 
     val api: OcmApi = retrofit.create(OcmApi::class.java)
+
+    val apiKey: String
+        get() = BuildConfig.OCM_API_KEY
 }

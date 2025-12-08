@@ -11,6 +11,7 @@ data class OcmPoiDto(
         @Json(name = "Title") val title: String?,
         @Json(name = "AddressLine1") val line1: String?,
         @Json(name = "Town") val town: String?,
+        @Json(name = "StateOrProvince") val state: String?,
         @Json(name = "Postcode") val postcode: String?,
         @Json(name = "Latitude") val lat: Double?,
         @Json(name = "Longitude") val lng: Double?
