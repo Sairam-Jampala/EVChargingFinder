@@ -1,0 +1,41 @@
+package com.example.evchargingfinder.presentation
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
+import com.example.evchargingfinder.domain.ChargerLocation
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+
+@Composable
+fun ChargerMapScreen(
+    chargers: List<ChargerLocation>
+) {
+    // Default camera position – centre on London for now
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(
+            LatLng(51.5074, -0.1278), 10f
+        )
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState
+    ) {
+        chargers.forEach { charger ->
+            val lat = charger.latitude
+            val lng = charger.longitude
+            if (lat != null && lng != null) {
+                Marker(
+                    state = MarkerState(position = LatLng(lat, lng)),
+                    title = charger.title,
+                    snippet = charger.connectorsSummary
+                )
+            }
+        }
+    }
+}
