@@ -1,8 +1,8 @@
 package com.example.evchargingfinder.presentation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxSize
 import com.example.evchargingfinder.domain.ChargerLocation
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -15,11 +15,13 @@ import com.google.maps.android.compose.rememberCameraPositionState
 fun ChargerMapScreen(
     chargers: List<ChargerLocation>
 ) {
-    // Default camera position – centre on London for now
+    // Center on first charger if we have one, otherwise London
+    val initialPosition = chargers.firstOrNull { it.latitude != null && it.longitude != null }?.let {
+        LatLng(it.latitude!!, it.longitude!!)
+    } ?: LatLng(51.5074, -0.1278) // London
+
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
-            LatLng(51.5074, -0.1278), 10f
-        )
+        position = CameraPosition.fromLatLngZoom(initialPosition, 11f)
     }
 
     GoogleMap(

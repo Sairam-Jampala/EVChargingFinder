@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+val ocmApiKey: String = (project.findProperty("OCM_API_KEY") as? String).orEmpty()
 
 android {
     namespace = "com.example.evchargingfinder"
@@ -16,6 +17,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "OCM_API_KEY", "\"$ocmApiKey\"")
     }
 
     buildFeatures {
