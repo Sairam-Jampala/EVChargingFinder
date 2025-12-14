@@ -4,12 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,49 +12,86 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.evchargingfinder.domain.ChargerLocation
 
-// ---------- MAIN SCREEN ----------
-
 @Composable
-fun ChargerHomeScreen() {
-    val viewModel: ChargerViewModel = viewModel()
+fun ChargerHomeScreen(
+    viewModel: ChargerViewModel = viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     var showMap by remember { mutableStateOf(false) }
-
-    // selected charger for details dialog
     var selectedCharger by remember { mutableStateOf<ChargerLocation?>(null) }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        when (uiState) {
-            is ChargerUiState.Loading -> LoadingState()
+    Column(modifier = Modifier.fillMaxSize()) {
 
-            is ChargerUiState.Error -> ErrorState(
-                message = (uiState as ChargerUiState.Error).message
-            )
+        // ✅ Top buttons (List / Map)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { showMap = false },
+                modifier = Modifier.weight(1f),
+                enabled = showMap
+            ) {
+                Text("List")
+            }
+
+            Button(
+                onClick = { showMap = true },
+                modifier = Modifier.weight(1f),
+                enabled = !showMap
+            ) {
+                Text("Map")
+            }
+        }
+
+        // ✅ UI State handling (Loading / Error / Success)
+        when (val state = uiState) {
+
+            is ChargerUiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is ChargerUiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Failed to load chargers",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = state.message)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.retry() }) {
+                        Text("Retry")
+                    }
+                }
+            }
 
             is ChargerUiState.Success -> {
-                val chargers = (uiState as ChargerUiState.Success).chargers
+                val chargers = state.chargers
 
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { showMap = false },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("List")
-                        }
-                        OutlinedButton(
-                            onClick = { showMap = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Map")
-                        }
-                    }
+
+                    // ✅ Charger count (nice Sprint 5 polish)
+                    Text(
+                        text = "${chargers.size} charging locations found",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
 
                     if (showMap) {
                         ChargerMapScreen(chargers = chargers)
@@ -72,18 +104,35 @@ fun ChargerHomeScreen() {
                 }
             }
         }
+    }
 
-        // shared details dialog for list + map
-        if (selectedCharger != null) {
-            ChargerDetailsDialog(
-                charger = selectedCharger!!,
-                onDismiss = { selectedCharger = null }
-            )
-        }
+    // ✅ Details dialog (click list item)
+    if (selectedCharger != null) {
+        val c = selectedCharger!!
+
+        val address = listOfNotNull(c.addressLine, c.town)
+            .joinToString(", ")
+
+        AlertDialog(
+            onDismissRequest = { selectedCharger = null },
+            confirmButton = {
+                TextButton(onClick = { selectedCharger = null }) {
+                    Text("Close")
+                }
+            },
+            title = { Text(c.title) },
+            text = {
+                Column {
+                    if (address.isNotBlank()) {
+                        Text(address)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    Text("Connectors: ${c.connectorsSummary}")
+                }
+            }
+        )
     }
 }
-
-// ---------- LIST + ROW ----------
 
 @Composable
 private fun ChargersList(
@@ -91,120 +140,52 @@ private fun ChargersList(
     onChargerClick: (ChargerLocation) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(chargers, key = { it.id }) { charger ->
-            ChargerRow(
+        items(chargers) { charger ->
+            ChargerListItem(
                 charger = charger,
                 onClick = { onChargerClick(charger) }
             )
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun ChargerRow(
+private fun ChargerListItem(
     charger: ChargerLocation,
     onClick: () -> Unit
 ) {
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
     ) {
-        Text(
-            text = charger.title,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Column(modifier = Modifier.padding(12.dp)) {
 
-        val address = listOfNotNull(
-            charger.addressLine,
-            charger.town
-        ).joinToString(", ")
-
-        if (address.isNotBlank()) {
             Text(
-                text = address,
-                style = MaterialTheme.typography.bodySmall
+                text = charger.title,
+                style = MaterialTheme.typography.titleMedium
             )
-        }
 
-        Spacer(modifier = Modifier.height(4.dp))
+            val address = listOfNotNull(charger.addressLine, charger.town)
+                .joinToString(", ")
 
-        Text(
-            text = "Connectors: ${charger.connectorsSummary}",
-            style = MaterialTheme.typography.bodySmall
-        )
-    }
-}
+            if (address.isNotBlank()) {
+                Text(
+                    text = address,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
-// ---------- SIMPLE STATES ----------
+            Spacer(modifier = Modifier.height(4.dp))
 
-@Composable
-private fun LoadingState() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Loading nearby chargers…")
-    }
-}
-
-@Composable
-private fun ErrorState(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Failed to load chargers",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = message,
+                text = "Connectors: ${charger.connectorsSummary}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
     }
-}
-
-// ---------- DETAILS DIALOG ----------
-
-@Composable
-private fun ChargerDetailsDialog(
-    charger: ChargerLocation,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(charger.title) },
-        text = {
-            Column {
-                val address = listOfNotNull(
-                    charger.addressLine,
-                    charger.town
-                ).joinToString(", ")
-
-                if (address.isNotBlank()) {
-                    Text(address)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                Text("Connectors: ${charger.connectorsSummary}")
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
 }
