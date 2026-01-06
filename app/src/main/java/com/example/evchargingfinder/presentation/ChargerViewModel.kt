@@ -73,4 +73,7 @@ class ChargerViewModel : ViewModel() {
             }
         }
     }
+    fun retry() {
+        loadChargers()
+    }
 }
