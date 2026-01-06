@@ -1,5 +1,6 @@
 package com.example.evchargingfinder.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.evchargingfinder.data.ocm.OcmApiProvider
@@ -67,6 +68,7 @@ class ChargerViewModel : ViewModel() {
                 _uiState.value = ChargerUiState.Success(mapped)
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.e("EVChargingFinder", "Error loading chargers",e)
                 _uiState.value = ChargerUiState.Error(
                     e.message ?: "Unknown error loading chargers"
                 )
